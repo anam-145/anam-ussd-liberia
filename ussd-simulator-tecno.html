@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USSD Simulator - Tecno T901 (*123#)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #0B3B5A 0%, #0E4A78 40%, #146A9C 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .simulator-container {
+            display: flex;
+            gap: 40px;
+            max-width: 1400px;
+            width: 100%;
+            align-items: center;
+        }
+
+        /* Tecno T901 Phone Design */
+        .tecno-phone {
+            width: 300px;
+            height: 550px;
+            background: linear-gradient(145deg, #3a3a3a, #1a1a1a);
+            border-radius: 20px;
+            padding: 15px 12px;
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                inset 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 0 0 2px rgba(100, 100, 100, 0.3);
+            position: relative;
+            border: 2px solid #2a2a2a;
+        }
+
+        /* Screen area */
+        .screen-bezel {
+            background: #000;
+            border-radius: 3px;
+            padding: 4px;
+            margin-bottom: 12px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 260px;
+            background: #1a1a1a;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* KaiOS Status Bar */
+        .status-bar {
+            background: rgba(0, 0, 0, 0.5);
+            height: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 6px;
+            font-size: 9px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .status-icons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .status-time {
+            font-weight: bold;
+        }
+
+        /* USSD Display Area */
+        .ussd-display {
+            background: #fff;
+            height: 215px;
+            padding: 12px 10px;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #000;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Arial', sans-serif;
+            border-top: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        /* Bottom action bar (KaiOS style) */
+        .action-bar {
+            position: absolute;
+            bottom: 27px;
+            left: 10px;
+            right: 10px;
+            height: 22px;
+            background: rgba(100, 100, 100, 0.9);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 10px;
+            color: #fff;
+            border-radius: 2px;
+        }
+
+        .action-button {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* T9 Keypad */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+            padding: 0;
+        }
+
+        .key {
+            width: 85px;
+            height: 38px;
+            background: linear-gradient(145deg, #404040, #2a2a2a);
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow:
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        .key:active {
+            transform: scale(0.97);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(145deg, #505050, #3a3a3a);
+        }
+
+        .key:hover {
+            background: linear-gradient(145deg, #4a4a4a, #353535);
+        }
+
+        .key-number {
+            font-size: 16px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .key-letters {
+            font-size: 8px;
+            color: #aaa;
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .key-action {
+            background: linear-gradient(145deg, #4a4a4a, #3a3a3a);
+        }
+
+        .key-send {
+            background: linear-gradient(145deg, #27ae60, #229954);
+        }
+
+        .key-end {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+        }
+
+        .key-center {
+            background: linear-gradient(145deg, #505050, #3a3a3a);
+            border: 1px solid #666;
+        }
+
+        .key-center .key-number {
+            font-size: 11px;
+        }
+
+        /* Speaker grill */
+        .speaker {
+            width: 40px;
+            height: 3px;
+            background: #222;
+            border-radius: 1px;
+            margin: 0 auto 10px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Brand logo */
+        .brand-logo {
+            text-align: center;
+            color: #888;
+            font-size: 9px;
+            margin-top: 6px;
+            font-weight: bold;
+            letter-spacing: 3px;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            flex: 1;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .info-panel h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-section h3 {
+            color: #34495e;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .info-section p {
+            color: #7f8c8d;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-new {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-active {
+            background: #27ae60;
+            color: white;
+        }
+
+        .scenario-selector {
+            background: #ecf0f1;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .scenario-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .scenario-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .log-entry {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #3498db;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .log-entry strong {
+            color: #2c3e50;
+        }
+
+        .device-info {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .device-info h3 {
+            color: #ecf0f1;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .device-info p {
+            color: #bdc3c7;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .instruction-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            margin-bottom: 20px;
+        }
+
+        .instruction-box p {
+            color: #2c3e50;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        /* Custom scrollbar */
+        .ussd-display::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .ussd-display::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .ussd-display::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="simulator-container">
+        <!-- Tecno T901 Phone -->
+        <div class="tecno-phone">
+            <div class="speaker"></div>
+
+            <div class="screen-bezel">
+                <div class="phone-screen">
+                    <div class="status-bar">
+                        <div class="status-icons">
+                            <span>📶</span>
+                            <span>🔋</span>
+                        </div>
+                        <div class="status-time" id="statusTime">12:30</div>
+                    </div>
+
+                    <div class="ussd-display" id="display">Welcome to USSD
+
+Press * to dial *123#</div>
+
+                    <div class="action-bar">
+                        <span class="action-button" id="softLeft">Options</span>
+                        <span class="action-button"></span>
+                        <span class="action-button" id="softRight">Back</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- T9 Keypad -->
+            <div class="keypad">
+                <button class="key" data-key="1">
+                    <span class="key-number">1</span>
+                    <span class="key-letters"></span>
+                </button>
+                <button class="key" data-key="2">
+                    <span class="key-number">2</span>
+                    <span class="key-letters">ABC</span>
+                </button>
+                <button class="key" data-key="3">
+                    <span class="key-number">3</span>
+                    <span class="key-letters">DEF</span>
+                </button>
+                <button class="key" data-key="4">
+                    <span class="key-number">4</span>
+                    <span class="key-letters">GHI</span>
+                </button>
+                <button class="key" data-key="5">
+                    <span class="key-number">5</span>
+                    <span class="key-letters">JKL</span>
+                </button>
+                <button class="key" data-key="6">
+                    <span class="key-number">6</span>
+                    <span class="key-letters">MNO</span>
+                </button>
+                <button class="key" data-key="7">
+                    <span class="key-number">7</span>
+                    <span class="key-letters">PQRS</span>
+                </button>
+                <button class="key" data-key="8">
+                    <span class="key-number">8</span>
+                    <span class="key-letters">TUV</span>
+                </button>
+                <button class="key" data-key="9">
+                    <span class="key-number">9</span>
+                    <span class="key-letters">WXYZ</span>
+                </button>
+                <button class="key key-action" data-key="*">
+                    <span class="key-number">*</span>
+                    <span class="key-letters">+</span>
+                </button>
+                <button class="key" data-key="0">
+                    <span class="key-number">0</span>
+                    <span class="key-letters">_</span>
+                </button>
+                <button class="key key-action" data-key="#">
+                    <span class="key-number">#</span>
+                </button>
+                <button class="key key-send" data-key="send">
+                    <span class="key-number">📞</span>
+                </button>
+                <button class="key key-center" data-key="ok">
+                    <span class="key-number">OK</span>
+                </button>
+                <button class="key key-end" data-key="end">
+                    <span class="key-number">✕</span>
+                </button>
+            </div>
+
+            <div class="brand-logo">TECNO</div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <h2>USSD Simulator - Tecno T901</h2>
+
+            <div class="device-info">
+                <h3>Device Information</h3>
+                <p><strong>Model:</strong> Tecno T901</p>
+                <p><strong>OS:</strong> KaiOS 2.5</p>
+                <p><strong>Network:</strong> MTN Liberia</p>
+                <p><strong>USSD Code:</strong> *123#</p>
+            </div>
+
+            <div class="instruction-box">
+                <p><strong>How to use:</strong></p>
+                <p>1. Press * key to start dialing</p>
+                <p>2. Type numbers on the keypad</p>
+                <p>3. Press OK (center button) to submit</p>
+                <p>4. Press ✕ (red button) to cancel/exit</p>
+            </div>
+
+            <div class="scenario-selector">
+                <label for="scenarioSelect">Select User Scenario:</label>
+                <select id="scenarioSelect">
+                    <option value="new">New User (First Time - PIN Setup)</option>
+                    <option value="existing">Existing User (Already Activated)</option>
+                </select>
+            </div>
+
+            <div class="info-section">
+                <h3>Current Session Status</h3>
+                <span class="status-badge" id="statusBadge">Not Started</span>
+                <p><strong>Phone Number:</strong> <span id="phoneNumber">+231 777 123 456</span></p>
+                <p><strong>User Status:</strong> <span id="userStatus">-</span></p>
+                <p><strong>Current State:</strong> <span id="currentState">-</span></p>
+            </div>
+
+            <div class="info-section">
+                <h3>Session Log</h3>
+                <div id="sessionLog"></div>
+            </div>
+
+            <div class="info-section">
+                <h3>Available Features</h3>
+                <p>1. Check Balance - View wallet balance</p>
+                <p>2. Transfer - Send funds to another user</p>
+                <p>3. Exit - End USSD session</p>
+            </div>
+
+            <div class="info-section">
+                <h3>Test Data</h3>
+                <p><strong>Test PIN:</strong> 1234</p>
+                <p><strong>Test Recipient Phone:</strong> +231 777 999 888</p>
+                <p><strong>Test Amount:</strong> 10</p>
+                <p><strong>Mock Balance:</strong> 100 USDC</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Session state management
+        let session = {
+            sessionId: null,
+            phoneNumber: '+231777123456',
+            state: 'IDLE',
+            tempData: {},
+            isNewUser: true,
+            inputBuffer: ''
+        };
+
+        // Mock user data
+        const mockUsers = {
+            new: {
+                status: 'PENDING_USSD',
+                hasWallet: false,
+                balance: 0
+            },
+            existing: {
+                status: 'ACTIVE',
+                hasWallet: true,
+                walletAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+                balance: 100,
+                pin: '1234'
+            }
+        };
+
+        // UI Elements
+        const display = document.getElementById('display');
+        const scenarioSelect = document.getElementById('scenarioSelect');
+        const statusBadge = document.getElementById('statusBadge');
+        const userStatus = document.getElementById('userStatus');
+        const currentState = document.getElementById('currentState');
+        const sessionLog = document.getElementById('sessionLog');
+        const softLeft = document.getElementById('softLeft');
+        const softRight = document.getElementById('softRight');
+        const statusTime = document.getElementById('statusTime');
+
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            statusTime.textContent = `${hours}:${minutes}`;
+        }
+        updateClock();
+        setInterval(updateClock, 60000);
+
+        // Menu texts
+        const menus = {
+            welcome_new: "Welcome to UNDP Wallet.\nThis is your first time.\n\nPlease set your 4-digit PIN:",
+            welcome_back: "Welcome to UNDP Wallet.\n\nPlease enter your PIN:",
+            main_menu: "UNDP Wallet\n\n1. Check Balance\n2. Transfer\n3. Exit\n\nSelect option:",
+            enter_pin: "Enter your 4-digit PIN:",
+            invalid_pin: "Invalid PIN.\nSession ended.",
+            enter_recipient: "Enter recipient:\n(Phone number or address)",
+            enter_amount: "Enter amount to send:",
+            confirm_transfer: "Send {amount} to {recipient}?\n\n1. Yes\n2. No",
+            transfer_success: "Transfer successful!\nTxHash: {txHash}\n\nPress OK for menu",
+            balance_display: "Your Balance:\n{balance} USDC\n\nPress OK for menu",
+            account_activated: "Account Activated!\n\nWallet: {address}\n\nPress OK for menu",
+            session_ended: "Thank you for using UNDP Wallet.\nGoodbye!"
+        };
+
+        // Event Listeners - Keypad
+        document.querySelectorAll('.key').forEach(key => {
+            key.addEventListener('click', () => {
+                const keyValue = key.dataset.key;
+                console.log('Key pressed:', keyValue, 'Current state:', session.state);
+                handleKeyPress(keyValue);
+            });
+        });
+
+        scenarioSelect.addEventListener('change', resetSimulator);
+
+        function handleKeyPress(key) {
+            if (session.state === 'IDLE') {
+                if (key === '*') {
+                    session.state = 'DIALING';
+                    session.inputBuffer = '*';
+                    updateDisplay('Dialing: *');
+                    logAction('Dialing', 'Started dialing USSD code');
+                }
+                return;
+            }
+
+            if (session.state === 'DIALING') {
+                if (key === '1' || key === '2' || key === '3' || key === '#') {
+                    session.inputBuffer += key;
+                    updateDisplay('Dialing: ' + session.inputBuffer);
+
+                    if (session.inputBuffer === '*123#') {
+                        logAction('Dialing Complete', 'Dialed *123#');
+                        setTimeout(() => initSession(), 500);
+                    }
+                }
+                return;
+            }
+
+            switch (key) {
+                case 'ok':
+                case 'send':
+                    handleOkPress();
+                    break;
+                case 'end':
+                    if (session.state !== 'IDLE') {
+                        endSession();
+                    }
+                    break;
+                default:
+                    if (session.state !== 'IDLE' && session.state !== 'DIALING' &&
+                        session.state !== 'SESSION_ENDED' && session.state !== 'SHOWING_RESULT') {
+                        if (key.match(/[0-9*#]/)) {
+                            session.inputBuffer += key;
+                            updateInputDisplay();
+                        }
+                    }
+            }
+        }
+
+        function updateInputDisplay() {
+            const baseDisplay = display.textContent.split('\n\n')[0] || display.textContent;
+            const inputLine = session.inputBuffer ? '\n\n> ' + session.inputBuffer : '';
+            updateDisplay(baseDisplay + inputLine);
+        }
+
+        function handleOkPress() {
+            if (session.state === 'IDLE') {
+                session.state = 'DIALING';
+                session.inputBuffer = '';
+                updateDisplay('Dial *123# or use * key');
+                return;
+            }
+
+            if (session.state === 'SHOWING_RESULT') {
+                showMainMenu();
+                return;
+            }
+
+            const input = session.inputBuffer.trim();
+            if (!input) return;
+
+            logAction('User input', input);
+            session.inputBuffer = '';
+            processInput(input);
+        }
+
+        function initSession() {
+            session.sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+            session.isNewUser = scenarioSelect.value === 'new';
+            session.inputBuffer = '';
+
+            if (session.isNewUser) {
+                session.state = 'AWAITING_PIN_SETUP';
+                updateDisplay(menus.welcome_new);
+                updateStatus('New User', 'PENDING_USSD', 'AWAITING_PIN_SETUP');
+                logAction('Session started', 'New user detected. Prompting PIN setup.');
+            } else {
+                session.state = 'AWAITING_PIN';
+                updateDisplay(menus.welcome_back);
+                updateStatus('Existing User', 'ACTIVE', 'AWAITING_PIN');
+                logAction('Session started', 'Existing user detected. Prompting PIN.');
+            }
+
+            updateSoftKeys('Cancel', 'Exit');
+        }
+
+        function processInput(input) {
+            switch (session.state) {
+                case 'AWAITING_PIN_SETUP':
+                    handlePinSetup(input);
+                    break;
+                case 'AWAITING_PIN':
+                    handlePinVerification(input);
+                    break;
+                case 'MAIN_MENU':
+                    handleMainMenu(input);
+                    break;
+                case 'AWAITING_PIN_BALANCE':
+                    handlePinForBalance(input);
+                    break;
+                case 'AWAITING_PIN_TRANSFER':
+                    handlePinForTransfer(input);
+                    break;
+                case 'AWAITING_RECIPIENT':
+                    handleRecipient(input);
+                    break;
+                case 'AWAITING_AMOUNT':
+                    handleAmount(input);
+                    break;
+                case 'AWAITING_CONFIRM':
+                    handleConfirmation(input);
+                    break;
+            }
+        }
+
+        function handlePinSetup(pin) {
+            if (pin.length !== 4 || !/^\d+$/.test(pin)) {
+                updateDisplay("PIN must be 4 digits.\nPlease try again:");
+                return;
+            }
+
+            session.tempData.pin = pin;
+            logAction('PIN Setup', 'PIN set successfully. Activating account...');
+
+            updateDisplay("Creating account...");
+
+            // Simulate account activation
+            setTimeout(() => {
+                const mockAddress = '0x' + Math.random().toString(16).substr(2, 40);
+                const message = menus.account_activated.replace('{address}', mockAddress);
+                updateDisplay(message);
+                updateStatus('Activated', 'ACTIVE', 'SHOWING_RESULT');
+                logAction('Account Activated', `Wallet created: ${mockAddress}`);
+                session.state = 'SHOWING_RESULT';
+            }, 1500);
+        }
+
+        function handlePinVerification(pin) {
+            if (pin === mockUsers.existing.pin) {
+                logAction('PIN Verified', 'Access granted.');
+                showMainMenu();
+            } else {
+                updateDisplay(menus.invalid_pin);
+                updateStatus('Failed', 'PIN Incorrect', 'SESSION_ENDED');
+                logAction('PIN Failed', 'Invalid PIN entered. Session ended.');
+                session.state = 'SESSION_ENDED';
+                setTimeout(resetSimulator, 3000);
+            }
+        }
+
+        function showMainMenu() {
+            session.state = 'MAIN_MENU';
+            updateDisplay(menus.main_menu);
+            updateStatus('Authenticated', 'ACTIVE', 'MAIN_MENU');
+            updateSoftKeys('', 'Exit');
+        }
+
+        function handleMainMenu(choice) {
+            switch (choice) {
+                case '1':
+                    session.state = 'AWAITING_PIN_BALANCE';
+                    updateDisplay(menus.enter_pin);
+                    updateStatus('Authenticated', 'ACTIVE', 'AWAITING_PIN_BALANCE');
+                    logAction('Menu Selection', 'User selected: Check Balance');
+                    break;
+                case '2':
+                    session.state = 'AWAITING_PIN_TRANSFER';
+                    updateDisplay(menus.enter_pin);
+                    updateStatus('Authenticated', 'ACTIVE', 'AWAITING_PIN_TRANSFER');
+                    logAction('Menu Selection', 'User selected: Transfer');
+                    break;
+                case '3':
+                    endSession();
+                    break;
+                default:
+                    updateDisplay("Invalid option.\n\n" + menus.main_menu);
+            }
+        }
+
+        function handlePinForBalance(pin) {
+            if (pin === session.tempData.pin || pin === mockUsers.existing.pin) {
+                logAction('Balance Check', 'Fetching balance...');
+                updateDisplay("Loading...");
+
+                setTimeout(() => {
+                    const balance = mockUsers.existing.balance;
+                    const message = menus.balance_display.replace('{balance}', balance);
+                    updateDisplay(message);
+                    session.state = 'SHOWING_RESULT';
+                    updateStatus('Authenticated', 'ACTIVE', 'SHOWING_RESULT');
+                }, 800);
+            } else {
+                updateDisplay(menus.invalid_pin);
+                session.state = 'SESSION_ENDED';
+                setTimeout(resetSimulator, 2000);
+            }
+        }
+
+        function handlePinForTransfer(pin) {
+            if (pin === session.tempData.pin || pin === mockUsers.existing.pin) {
+                session.state = 'AWAITING_RECIPIENT';
+                updateDisplay(menus.enter_recipient);
+                updateStatus('Authenticated', 'ACTIVE', 'AWAITING_RECIPIENT');
+                logAction('Transfer Started', 'PIN verified. Requesting recipient.');
+            } else {
+                updateDisplay(menus.invalid_pin);
+                session.state = 'SESSION_ENDED';
+                setTimeout(resetSimulator, 2000);
+            }
+        }
+
+        function handleRecipient(recipient) {
+            session.tempData.recipient = recipient;
+            session.state = 'AWAITING_AMOUNT';
+            updateDisplay(menus.enter_amount);
+            updateStatus('Authenticated', 'ACTIVE', 'AWAITING_AMOUNT');
+            logAction('Recipient Set', `Recipient: ${recipient}`);
+        }
+
+        function handleAmount(amount) {
+            if (isNaN(amount) || parseFloat(amount) <= 0) {
+                updateDisplay("Invalid amount.\n\n" + menus.enter_amount);
+                return;
+            }
+
+            session.tempData.amount = amount;
+            session.state = 'AWAITING_CONFIRM';
+            const message = menus.confirm_transfer
+                .replace('{amount}', amount)
+                .replace('{recipient}', session.tempData.recipient);
+            updateDisplay(message);
+            updateStatus('Authenticated', 'ACTIVE', 'AWAITING_CONFIRM');
+            logAction('Amount Set', `Amount: ${amount} USDC`);
+        }
+
+        function handleConfirmation(choice) {
+            if (choice === '1') {
+                logAction('Transfer Confirmed', 'Processing transaction...');
+                updateDisplay("Processing...");
+
+                setTimeout(() => {
+                    const txHash = '0x' + Math.random().toString(16).substr(2, 64);
+                    const message = menus.transfer_success.replace('{txHash}', txHash);
+                    updateDisplay(message);
+                    session.state = 'SHOWING_RESULT';
+                    updateStatus('Authenticated', 'ACTIVE', 'SHOWING_RESULT');
+                    logAction('Transfer Success', `TxHash: ${txHash}`);
+                }, 1200);
+            } else {
+                logAction('Transfer Cancelled', 'User cancelled transaction.');
+                showMainMenu();
+            }
+        }
+
+        function endSession() {
+            updateDisplay(menus.session_ended);
+            updateStatus('Ended', '-', 'SESSION_ENDED');
+            logAction('Session Ended', 'User exited.');
+            session.state = 'SESSION_ENDED';
+            updateSoftKeys('', '');
+            setTimeout(resetSimulator, 3000);
+        }
+
+        function updateDisplay(text) {
+            display.textContent = text;
+        }
+
+        function updateStatus(badge, status, state) {
+            statusBadge.textContent = badge;
+            statusBadge.className = 'status-badge ' +
+                (badge.includes('New') || badge.includes('Failed') ? 'status-new' : 'status-active');
+            userStatus.textContent = status;
+            currentState.textContent = state;
+        }
+
+        function updateSoftKeys(left, right) {
+            softLeft.textContent = left;
+            softRight.textContent = right;
+        }
+
+        function logAction(action, details) {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `<strong>${timestamp} - ${action}:</strong> ${details}`;
+            sessionLog.insertBefore(logEntry, sessionLog.firstChild);
+        }
+
+        function resetSimulator() {
+            session = {
+                sessionId: null,
+                phoneNumber: '+231777123456',
+                state: 'IDLE',
+                tempData: {},
+                isNewUser: true,
+                inputBuffer: ''
+            };
+
+            updateDisplay("Welcome to USSD\n\nPress * to dial *123#");
+            updateStatus('Not Started', '-', 'IDLE');
+            updateSoftKeys('Options', 'Back');
+            sessionLog.innerHTML = '';
+        }
+
+        // Initialize
+        resetSimulator();
+    </script>
+</body>
+</html>
