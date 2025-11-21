@@ -482,7 +482,7 @@ export function useUssdSession(initialPhoneNumber: string) {
       }
 
       if (key.match(/[0-9]/)) {
-        const inputStates = [
+        const inputStates: UssdState[] = [
           USSD_STATES.AWAITING_PIN_SETUP,
           USSD_STATES.AWAITING_PIN_CONFIRM,
           USSD_STATES.MAIN_MENU,
@@ -491,7 +491,7 @@ export function useUssdSession(initialPhoneNumber: string) {
           USSD_STATES.AWAITING_AMOUNT,
           USSD_STATES.CONFIRM_TRANSFER,
         ];
-        const pinStates = [
+        const pinStates: UssdState[] = [
           USSD_STATES.AWAITING_PIN_SETUP,
           USSD_STATES.AWAITING_PIN_CONFIRM,
           USSD_STATES.AWAITING_PIN_TRANSFER,
