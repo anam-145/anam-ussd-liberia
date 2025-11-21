@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://liberia.anamwallet.io';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
