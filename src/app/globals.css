@@ -15,8 +15,8 @@ body {
 
 /* Tecno Phone Styles */
 .tecno-phone {
-  width: 300px;
-  height: 550px;
+  width: 360px;
+  height: 660px;
   background: linear-gradient(145deg, #3a3a3a, #1a1a1a);
   border-radius: 20px;
   padding: 15px 12px;
@@ -37,7 +37,7 @@ body {
 
 .phone-screen {
   width: 100%;
-  height: 260px;
+  height: 320px;
   background: #1a1a1a;
   border-radius: 2px;
   position: relative;
@@ -59,7 +59,7 @@ body {
 
 .ussd-display {
   background: #fff;
-  height: 215px;
+  height: 275px;
   padding: 12px 10px;
   font-size: 13px;
   line-height: 1.4;
@@ -94,8 +94,8 @@ body {
 
 /* Keypad */
 .key {
-  width: 85px;
-  height: 38px;
+  width: 102px;
+  height: 44px;
   background: linear-gradient(145deg, #404040, #2a2a2a);
   border: 1px solid #555;
   border-radius: 4px;
@@ -144,8 +144,6 @@ body {
   padding: 30px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   flex: 1;
-  max-height: 600px;
-  overflow-y: auto;
 }
 
 .info-panel h2 {

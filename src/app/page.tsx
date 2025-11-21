@@ -1,9 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useUssdSession } from '@/hooks/useUssdSession';
 
 export default function Home() {
   const [statusTime, setStatusTime] = useState('12:30');
+  const [phoneInput, setPhoneInput] = useState('886123412');
+
+  const { display, setPhoneNumber, handleKeyPress, resetSession } = useUssdSession('+231' + phoneInput);
+
+  // 전화번호 변경 시 세션에 반영
+  useEffect(() => {
+    const normalized = '+231' + phoneInput.replace(/\s/g, '');
+    setPhoneNumber(normalized);
+  }, [phoneInput, setPhoneNumber]);
 
   useEffect(() => {
     const updateClock = () => {
@@ -32,11 +42,15 @@ export default function Home() {
     { key: '#', letters: '', className: 'key-action' },
   ];
 
+  const onKeyClick = (key: string) => {
+    handleKeyPress(key);
+  };
+
   return (
-    <main className="flex min-h-screen items-center justify-center p-5">
-      <div className="flex gap-10 max-w-[1400px] w-full items-center">
+    <main className="flex min-h-screen items-center justify-center p-5 relative">
+      <div className="flex gap-20 max-w-[1400px] w-full items-center">
         {/* Tecno T901 Phone */}
-        <div className="tecno-phone">
+        <div className="tecno-phone relative">
           <div className="w-10 h-[3px] bg-[#222] rounded-sm mx-auto mb-2.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]" />
 
           <div className="screen-bezel">
@@ -49,24 +63,18 @@ export default function Home() {
                 <div className="font-bold">{statusTime}</div>
               </div>
 
-              <div className="ussd-display">
-                {`Welcome to USSD
-
-Press * to dial *123#`}
-              </div>
-
-              <div className="action-bar">
-                <span className="action-button">Options</span>
-                <span className="action-button"></span>
-                <span className="action-button">Back</span>
-              </div>
+              <div className="ussd-display">{display}</div>
             </div>
           </div>
 
           {/* T9 Keypad */}
           <div className="grid grid-cols-3 gap-1.5 mt-2">
             {keypadData.map((item) => (
-              <button key={item.key} className={`key mx-auto ${item.className || ''}`}>
+              <button
+                key={item.key}
+                className={`key mx-auto ${item.className || ''}`}
+                onClick={() => onKeyClick(item.key)}
+              >
                 <span className="text-base leading-none flex items-center gap-2">{item.key}</span>
                 {item.letters && (
                   <span className="text-[8px] text-[#aaa] absolute right-1.5 top-1/2 -translate-y-1/2">
@@ -75,23 +83,31 @@ Press * to dial *123#`}
                 )}
               </button>
             ))}
-            <button className="key key-send mx-auto">
+            <button className="key key-send mx-auto" onClick={() => onKeyClick('send')}>
               <span className="text-base">📞</span>
             </button>
-            <button className="key key-center mx-auto">
+            <button className="key key-center mx-auto" onClick={() => onKeyClick('ok')}>
               <span className="text-[11px]">OK</span>
             </button>
-            <button className="key key-end mx-auto">
-              <span className="text-base">✕</span>
+            <button className="key key-end mx-auto" onClick={() => onKeyClick('backspace')}>
+              <span className="text-base">←</span>
             </button>
           </div>
 
           <div className="text-center text-[#888] text-[9px] mt-1.5 font-bold tracking-[3px]">TECNO</div>
+
+          {/* Reset Button */}
+          <button
+            onClick={resetSession}
+            className="absolute -bottom-12 right-0 px-4 py-2 bg-[#e74c3c] text-white text-xs font-bold rounded hover:bg-[#c0392b] transition-colors"
+          >
+            Reset
+          </button>
         </div>
 
         {/* Info Panel */}
         <div className="info-panel">
-          <h2>USSD Simulator - Tecno T901</h2>
+          <h2 className="mb-0 pb-0 border-0">USSD Simulator - Tecno T901</h2>
 
           <div className="device-info">
             <h3>Device Information</h3>
@@ -114,54 +130,37 @@ Press * to dial *123#`}
               <strong>How to use:</strong>
             </p>
             <p>1. Press * key to start dialing</p>
-            <p>2. Type numbers on the keypad</p>
-            <p>3. Press OK (center button) to submit</p>
-            <p>4. Press ✕ (red button) to cancel/exit</p>
+            <p>2. Type *123# on the keypad</p>
+            <p>3. Press 📞 (call button) to connect</p>
+            <p>4. Press OK to submit input</p>
+            <p>5. Press ← to delete</p>
+            <p>6. Press 0 + OK to go back</p>
           </div>
 
+          {/* Phone Number Input */}
           <div className="scenario-selector">
-            <label className="block mb-2 font-bold text-[#2c3e50]">Select User Scenario:</label>
-            <select className="w-full p-2.5 border-2 border-[#3498db] rounded text-sm">
-              <option value="new">New User (First Time - PIN Setup)</option>
-              <option value="existing">Existing User (Already Activated)</option>
-            </select>
-          </div>
-
-          <div className="info-section">
-            <h3>Current Session Status</h3>
-            <span className="status-badge status-new">Not Started</span>
-            <p>
-              <strong>Phone Number:</strong> +231 777 123 456
-            </p>
-            <p>
-              <strong>User Status:</strong> -
-            </p>
-            <p>
-              <strong>Current State:</strong> IDLE
-            </p>
-          </div>
-
-          <div className="info-section">
-            <h3>Available Features</h3>
-            <p>1. Check Balance - View wallet balance</p>
-            <p>2. Transfer - Send funds to another user</p>
-            <p>3. Exit - End USSD session</p>
-          </div>
-
-          <div className="info-section">
-            <h3>Test Data</h3>
-            <p>
-              <strong>Test PIN:</strong> 1234
-            </p>
-            <p>
-              <strong>Test Recipient Phone:</strong> +231 777 999 888
-            </p>
-            <p>
-              <strong>Test Amount:</strong> 10
-            </p>
-            <p>
-              <strong>Mock Balance:</strong> 100 USDC
-            </p>
+            <label className="block mb-2 font-bold text-[#2c3e50]">Enter Phone Number:</label>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-white border-2 border-[#3498db] rounded cursor-not-allowed opacity-80">
+                <svg width="24" height="16" viewBox="0 0 24 16" className="rounded-sm">
+                  <rect width="24" height="5.33" fill="#002868" />
+                  <rect y="5.33" width="24" height="5.33" fill="#FFFFFF" />
+                  <rect y="10.66" width="24" height="5.34" fill="#BF0A30" />
+                  <rect width="10" height="8" fill="#002868" />
+                  <polygon
+                    points="5,1 5.5,2.5 7,2.5 5.75,3.5 6.25,5 5,4 3.75,5 4.25,3.5 3,2.5 4.5,2.5"
+                    fill="#FFFFFF"
+                  />
+                </svg>
+              </div>
+              <input
+                type="tel"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                placeholder="777 123 456"
+                className="flex-1 p-2.5 border-2 border-[#3498db] rounded text-sm outline-none focus:border-[#2980b9]"
+              />
+            </div>
           </div>
         </div>
       </div>
