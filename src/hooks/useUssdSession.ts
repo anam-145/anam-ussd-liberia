@@ -209,12 +209,17 @@ export function useUssdSession(initialPhoneNumber: string) {
         }
         return;
       } else if (choice === '2') {
-        // 송금 - PIN 입력
+        // 송금 - 잔고 조회 후 수신자 입력
+        const balanceResult = await getBalance(phoneNumber);
+        const balance = balanceResult.success ? balanceResult.balance : '0';
+
         updateSession({
-          state: USSD_STATES.AWAITING_PIN_TRANSFER,
-          display: MENUS.ENTER_PIN_TRANSFER,
+          state: USSD_STATES.AWAITING_RECIPIENT,
+          display: MENUS.ENTER_RECIPIENT,
+          currentBalance: balance,
           inputBuffer: '',
         });
+        return;
       } else if (choice === '3') {
         updateSession({
           state: USSD_STATES.SESSION_ENDED,
@@ -235,38 +240,15 @@ export function useUssdSession(initialPhoneNumber: string) {
       return;
     }
 
-    // 송금 - PIN 입력 후
-    if (state === USSD_STATES.AWAITING_PIN_TRANSFER) {
-      if (inputBuffer === '0') {
-        updateSession({ state: USSD_STATES.MAIN_MENU, display: MENUS.MAIN_MENU, inputBuffer: '' });
-        return;
-      }
-      if (inputBuffer.length !== 4 || !/^\d{4}$/.test(inputBuffer)) {
-        updateSession({
-          display: 'PIN must be 4 digits.\n\n' + MENUS.ENTER_PIN_TRANSFER,
-          inputBuffer: '',
-        });
-        return;
-      }
-
-      // 잔고 조회해서 표시
-      const balanceResult = await getBalance(phoneNumber);
-      const balance = balanceResult.success ? balanceResult.balance : '0';
-
-      updateSession({
-        state: USSD_STATES.AWAITING_RECIPIENT,
-        display: MENUS.ENTER_RECIPIENT,
-        transferPin: inputBuffer,
-        currentBalance: balance,
-        inputBuffer: '',
-      });
-      return;
-    }
-
     // 수신자 입력 후
     if (state === USSD_STATES.AWAITING_RECIPIENT) {
       if (inputBuffer === '0') {
-        updateSession({ state: USSD_STATES.MAIN_MENU, display: MENUS.MAIN_MENU, inputBuffer: '', transferPin: '' });
+        updateSession({
+          state: USSD_STATES.MAIN_MENU,
+          display: MENUS.MAIN_MENU,
+          inputBuffer: '',
+          currentBalance: '',
+        });
         return;
       }
       if (!/^\d{9}$/.test(inputBuffer)) {
@@ -324,9 +306,37 @@ export function useUssdSession(initialPhoneNumber: string) {
       }
 
       updateSession({
-        state: USSD_STATES.CONFIRM_TRANSFER,
-        display: MENUS.CONFIRM_TRANSFER.replace('{amount}', inputBuffer).replace('{recipient}', transferRecipient),
+        state: USSD_STATES.AWAITING_PIN_TRANSFER,
+        display: MENUS.ENTER_PIN_TRANSFER,
         transferAmount: inputBuffer,
+        inputBuffer: '',
+      });
+      return;
+    }
+
+    // 송금 - PIN 입력 후
+    if (state === USSD_STATES.AWAITING_PIN_TRANSFER) {
+      if (inputBuffer === '0') {
+        updateSession({
+          state: USSD_STATES.AWAITING_AMOUNT,
+          display: MENUS.ENTER_AMOUNT.replace('{balance}', sessionRef.current.currentBalance),
+          inputBuffer: '',
+          transferAmount: '',
+        });
+        return;
+      }
+      if (inputBuffer.length !== 4 || !/^\d{4}$/.test(inputBuffer)) {
+        updateSession({
+          display: 'PIN must be 4 digits.\n\n' + MENUS.ENTER_PIN_TRANSFER,
+          inputBuffer: '',
+        });
+        return;
+      }
+
+      updateSession({
+        state: USSD_STATES.CONFIRM_TRANSFER,
+        display: MENUS.CONFIRM_TRANSFER.replace('{amount}', transferAmount).replace('{recipient}', transferRecipient),
+        transferPin: inputBuffer,
         inputBuffer: '',
       });
       return;
@@ -336,10 +346,10 @@ export function useUssdSession(initialPhoneNumber: string) {
     if (state === USSD_STATES.CONFIRM_TRANSFER) {
       if (inputBuffer === '0') {
         updateSession({
-          state: USSD_STATES.AWAITING_AMOUNT,
-          display: MENUS.ENTER_AMOUNT.replace('{balance}', sessionRef.current.currentBalance),
+          state: USSD_STATES.AWAITING_PIN_TRANSFER,
+          display: MENUS.ENTER_PIN_TRANSFER,
           inputBuffer: '',
-          transferAmount: '',
+          transferPin: '',
         });
         return;
       }
@@ -361,6 +371,10 @@ export function useUssdSession(initialPhoneNumber: string) {
           updateSession({
             state: USSD_STATES.MAIN_MENU,
             display: MENUS.TRANSFER_FAILED,
+            transferPin: '',
+            transferRecipient: '',
+            transferAmount: '',
+            currentBalance: '',
           });
         }
       } else if (inputBuffer === '2') {
@@ -371,6 +385,7 @@ export function useUssdSession(initialPhoneNumber: string) {
           transferPin: '',
           transferRecipient: '',
           transferAmount: '',
+          currentBalance: '',
         });
       }
       return;
@@ -385,6 +400,7 @@ export function useUssdSession(initialPhoneNumber: string) {
         transferPin: '',
         transferRecipient: '',
         transferAmount: '',
+        currentBalance: '',
       });
       return;
     }

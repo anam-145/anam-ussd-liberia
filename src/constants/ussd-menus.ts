@@ -42,9 +42,9 @@ export const MENUS = {
   LOADING_BALANCE: 'Loading balance...',
   BALANCE_DISPLAY: 'Your Balance:\n\n{balance} USDC\n\nPress OK for menu',
   // Transfer
-  ENTER_PIN_TRANSFER: 'Transfer\n\nEnter your 4-digit PIN:',
-  ENTER_RECIPIENT: 'Enter recipient\nphone number:',
+  ENTER_RECIPIENT: 'Transfer\n\nEnter recipient\nphone number:',
   ENTER_AMOUNT: 'Current Balance: {balance} USDC\n\nEnter amount to send:',
+  ENTER_PIN_TRANSFER: 'Enter your 4-digit PIN\nto confirm:',
   CONFIRM_TRANSFER: 'Send {amount} USDC to\n{recipient}?\n\n1. Yes\n2. No',
   PROCESSING_TRANSFER: 'Processing transfer...\nPlease wait.',
   TRANSFER_SUCCESS: 'Transfer Success!\n\nTxHash:\n{txHash}\n\nPress OK for menu',
